@@ -1,6 +1,17 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { MetaMaskInpageProvider } from "@metamask/providers";
+import Ethers from "ethers";
+import { useAccount, useConnect, useEnsName } from "wagmi";
+import { InjectedConnector } from "wagmi/connectors/injected";
 
 export const ConnectWallet: React.FC = () => {
+	const { address, isConnected } = useAccount();
+	const { data: ensName } = useEnsName({ address });
+	const { connect } = useConnect({
+		connector: new InjectedConnector(),
+	});
+
+	if (isConnected) return <div>Connected to {ensName ?? address}</div>;
 	return (
 		<div className="hero bg-base-100">
 			<div className="hero-content flex-col lg:flex-row-reverse">
@@ -11,8 +22,16 @@ export const ConnectWallet: React.FC = () => {
 						casino. It also allows you to place bets with our governance token.
 						Happy gambling!
 					</p>
+					<div className="form-control mt-6">
+						<button
+							onClick={() => connect()}
+							className="btn btn-accent btn-wide"
+						>
+							Sign into metamask
+						</button>
+					</div>
 				</div>
-				<div className="card flex-shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
+				{/* <div className="card flex-shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
 					<div className="card-body">
 						<div className="form-control">
 							<label className="label">
@@ -33,17 +52,12 @@ export const ConnectWallet: React.FC = () => {
 								placeholder="***********"
 								className="input input-bordered"
 							/>
-							{/* <label className="label">
-								<a href="#" className="label-text-alt link link-hover">
-									Forgot password?
-								</a>
-							</label> */}
 						</div>
 						<div className="form-control mt-6">
 							<button className="btn btn-accent">Connect</button>
 						</div>
 					</div>
-				</div>
+				</div> */}
 			</div>
 		</div>
 	);

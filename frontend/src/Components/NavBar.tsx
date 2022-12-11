@@ -1,8 +1,33 @@
 import React from "react";
 import { Link } from "react-router-dom";
-// import { Link } from "wouter";
+import { useAccount, useConnect, useEnsName } from "wagmi";
+import { InjectedConnector } from "wagmi/connectors/injected";
 
 export const NavBar: React.FC = () => {
+	const { address, isConnected } = useAccount();
+	const { data: ensName } = useEnsName({ address });
+	const { connect } = useConnect({
+		connector: new InjectedConnector(),
+	});
+
+	const ConnectWalletLink = () => {
+		if (!isConnected)
+			return (
+				<>
+				<li>
+						<Link to="/createwallet">
+							<a>Create Wallet</a>
+						</Link>
+					</li>
+				<li>
+					<Link to="/connectwallet">
+						<a>Connect Wallet</a>
+					</Link>
+				</li>
+				</>
+			);
+	};
+
 	return (
 		<div className="navbar bg-base-100 top-nav">
 			<div className="flex-1">
@@ -40,16 +65,12 @@ export const NavBar: React.FC = () => {
 							</li>
 						</ul>
 					</li>
-					<li>
+					{/* <li>
 						<Link to="/createwallet">
 							<a>Create Wallet</a>
 						</Link>
-					</li>
-					<li>
-						<Link to="/connectwallet">
-							<a>Connect Wallet</a>
-						</Link>
-					</li>
+					</li> */}
+					{ConnectWalletLink()}
 					<li>
 						<Link to="/dex">
 							<a>DEX</a>
