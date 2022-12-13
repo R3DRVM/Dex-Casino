@@ -63,7 +63,6 @@ export const Dex = () => {
     try {
       const allowanceBn = await sellTokenContract.allowance(address, zeroXExchangeProxy);
       const allowance = ethers.utils.formatUnits(allowanceBn, 18).toString();
-      console.log('🚀  file: Dex.tsx:66  allowance', allowance);
 
       // const approvalAmountBn = ethers.BigNumber.from('2').pow('256').sub('1'); // max uint256
       const approvalAmountBn = ethers.utils.parseEther(amount.toString());

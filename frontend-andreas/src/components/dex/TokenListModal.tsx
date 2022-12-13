@@ -16,7 +16,6 @@ export const TokenListModal = ({
   setModalVisible,
   currentPair,
 }: SwapModalProps) => {
-  console.log('🚀  file: SwapModal.tsx:12  tokens', tokens);
   const freqentSymbols = ['ETH', 'UNI', 'LINK', 'DAI', 'WETH', 'WBTC', 'MTK'];
   const frequentTokens = tokens.filter(token => freqentSymbols.includes(token.symbol));
 

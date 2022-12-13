@@ -3,3 +3,5 @@
 - [ ] Handle fetching state in UI (buttons).
 - [ ] Show buyAmount in Tokenrow when price fetched.
 - [ ] Tailor frequent tokens for different networks.
+- [ ] Implement search functionality in TokenListModal.
+
