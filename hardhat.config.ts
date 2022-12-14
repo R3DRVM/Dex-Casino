@@ -21,6 +21,14 @@ const config: HardhatUserConfig = {
       url: `https://eth-goerli.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
       accounts: [METAMASK_PK],
     },
+    polygon: {
+      url: `https://polygon-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
+      accounts: [METAMASK_PK],
+    },
+    mumbai: {
+      url: `https://polygon-mumbai.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
+      accounts: [METAMASK_PK],
+    },
   },
   namedAccounts: {
     deployer: {
