@@ -16,7 +16,12 @@ if (networkArg === 'goerli' && !METAMASK_PK) {
 
 const config: HardhatUserConfig = {
   solidity: '0.8.17',
+  // defaultNetwork: 'localhost',
   networks: {
+    localhost: {
+      url: 'http://127.0.0.1:8545/',
+      chainId: 31337,
+    },
     goerli: {
       url: `https://eth-goerli.alchemyapi.io/v2/${ALCHEMY_API_KEY}`,
       accounts: [METAMASK_PK],
@@ -34,6 +39,9 @@ const config: HardhatUserConfig = {
     deployer: {
       default: 0, // this will by default take the first account as deployer.
     },
+    player: {
+      default: 0
+    }
   },
 
   etherscan: {

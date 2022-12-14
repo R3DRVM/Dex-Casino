@@ -11,44 +11,35 @@ import {CasinoToken} from "./Token.sol";
 /// @custom:teaching This is a contract meant for teaching only
 
 contract Casino is Ownable {
+    /// @notice A struct representing a bet
+
     /// @notice Address of the token used as payment for the bets
     CasinoToken public paymentToken;
     /// @notice Amount of tokens given per ETH paid
     uint256 public purchaseRatio;
-    /// @notice Amount of tokens required for placing a bet that goes for the prize pool
-    uint256 public betPrice;
     /// @notice Amount of tokens required for placing a bet that goes for the owner pool
     uint256 public betFee;
-    /// @notice Amount of tokens in the prize pool
-    uint256 public prizePool;
     /// @notice Amount of tokens in the owner pool
     uint256 public ownerPool;
-    /// @notice Flag indicating if the lottery is open for bets
-    // bool public betsOpen;
-    // /// @notice Timestamp of the lottery next closing date
-    // uint256 public betsClosingTime;
-    // /// @notice Mapping of prize available for withdraw for each account
-    mapping(address => uint256) public prize;
 
-    /// @dev List of bet slots
-    address[] _slots;
+    /// @notice Mapping of winings available for withdraw for each account
+    mapping(address => uint256) public winnings;
+    /// @notice Mapping of bets to addresses
+    mapping(address => uint256) public bets;
 
     /// @notice Constructor function
     /// @param tokenName Name of the token used for payment
     /// @param tokenSymbol Symbol of the token used for payment
     /// @param _purchaseRatio Amount of tokens given per ETH paid
-    /// @param _betPrice Amount of tokens required for placing a bet that goes for the prize pool
     /// @param _betFee Amount of tokens required for placing a bet that goes for the owner pool
     constructor(
         string memory tokenName,
         string memory tokenSymbol,
         uint256 _purchaseRatio,
-        uint256 _betPrice,
         uint256 _betFee
     ) {
         paymentToken = new CasinoToken(tokenName, tokenSymbol);
         purchaseRatio = _purchaseRatio;
-        betPrice = _betPrice;
         betFee = _betFee;
     }
 
@@ -59,28 +50,19 @@ contract Casino is Ownable {
         paymentToken.mint(msg.sender, msg.value * purchaseRatio);
     }
 
-    /// @notice Charge the bet price and create a new bet slot with the sender address
-    function bet() public payable {
-        ownerPool += (msg.value * betFee);
-        prizePool += betPrice * 2;
-        _slots.push(msg.sender);
-        paymentToken.transferFrom(msg.sender, address(this), betPrice + betFee);
+    /// @notice Charge the amount and add bet amount multiplied by mulriplier to bets mapping
+    function bet(uint256 amount, uint256 multiplier) public payable {
+        require(amount >= paymentToken.balanceOf(msg.sender));
+        bets[msg.sender] = (amount - betFee) * multiplier;
+        ownerPool += (amount * betFee);
+        paymentToken.transferFrom(msg.sender, address(this), amount);
     }
 
-    // /// @notice Call the bet function `times` times
-    // function betMany(uint256 times) public {
-    //     require(times > 0);
-    //     while (times > 0) {
-    //         bet();
-    //         times--;
-    //     }
-    // }
-
-    /// @notice Withdraw `amount` from that accounts prize pool
-    function payout(uint256 amount) public {
-        require(amount <= prize[msg.sender], "Not enough prize");
-        prize[msg.sender] -= amount;
-        paymentToken.transfer(msg.sender, amount);
+    /// @notice Withdraw all tokens to senders from their winnings
+    function payout() public {
+        uint256 _winnings = winnings[msg.sender];
+        winnings[msg.sender] = 0;
+        paymentToken.transfer(msg.sender, _winnings);
     }
 
     /// @notice Withdraw `amount` from the owner pool
@@ -94,5 +76,21 @@ contract Casino is Ownable {
     function returnTokens(uint256 amount) public {
         paymentToken.burnFrom(msg.sender, amount);
         payable(msg.sender).transfer(amount / purchaseRatio);
+    }
+
+    /// @notice
+    function win(address player) public onlyOwner {
+        bets[player] = 0;
+        winnings[player] += bets[player];
+    }
+
+    /// @notice
+    function lose(address player) public onlyOwner {
+        bets[player] = 0;
+    }
+
+    /// @notice
+    function doAirdrop(address[] memory to, uint256 amount) public onlyOwner {
+        paymentToken.airdrop(to, amount);
     }
 }
