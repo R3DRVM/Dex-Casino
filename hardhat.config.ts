@@ -2,6 +2,7 @@ import { HardhatUserConfig } from 'hardhat/config';
 import '@nomicfoundation/hardhat-toolbox';
 import 'dotenv/config';
 import 'hardhat-deploy';
+// import '@nomiclabs/hardhat-ethers'
 
 const { ALCHEMY_API_KEY, ETHERSCAN_API_KEY, GAS_REPORTER_ENABLED, CMC_API_KEY } = process.env;
 
