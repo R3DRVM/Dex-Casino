@@ -1,26 +1,19 @@
-import React from 'react';
-import { NavLink, Route, Routes } from 'react-router-dom';
+import React from "react";
+import { NavLink, Route, Routes } from "react-router-dom";
 
-import './Casino.scss';
-import { Game1 } from './Game1';
-import { Game2 } from './Game2';
+import "./Casino.scss";
+import { Blackjack } from "./Blackjack";
+import { Roulette } from "./Roulette";
 
 export const Casino = () => {
-  return (
-    <div>
-      <div className='flex gap-8'>
-        <NavLink to={'game1'}>
-          <div className='game-card'>Game1</div>
-        </NavLink>
-        <NavLink to={'game2'}>
-          <div className='game-card'>Game2</div>
-        </NavLink>
-      </div>
+	return (
+		<div>
+			<div className="flex gap-8"></div>
 
-      <Routes>
-        <Route path='game1' element={<Game1 />} />
-        <Route path='game2' element={<Game2 />} />
-      </Routes>
-    </div>
-  );
+			<Routes>
+				<Route path="blackjack" element={<Blackjack />} />
+				<Route path="roulette" element={<Roulette />} />
+			</Routes>
+		</div>
+	);
 };
