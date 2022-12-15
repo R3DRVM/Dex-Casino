@@ -7,6 +7,9 @@
   "author": "many",
   "license": "MIT",
   "private": true,
+  "scripts": {
+    "airdrop": "yarn run ts-node scripts/airdrop.ts"
+  },
   "devDependencies": {
     "@ethersproject/abi": "^5.4.7",
     "@ethersproject/providers": "^5.4.7",

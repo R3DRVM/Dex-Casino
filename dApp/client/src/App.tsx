@@ -5,6 +5,7 @@ import { themeChange } from 'theme-change';
 import { Header } from './components/header/Header';
 import { Casino } from './pages/casino/Casino';
 import { Dex } from './pages/dex/Dex';
+import { Home } from './pages/Home';
 
 function App() {
   useEffect(() => {
@@ -16,6 +17,7 @@ function App() {
       <Header />
       <main className='main'>
         <Routes>
+          <Route path='/' element={<Home />} />
           <Route path='/dex' element={<Dex />} />
           <Route path='/casino/*' element={<Casino />} />
         </Routes>

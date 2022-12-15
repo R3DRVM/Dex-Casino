@@ -4,10 +4,12 @@ import { verifyContract } from '../utils/verifyContract';
 
 const { ETHERSCAN_API_KEY } = process.env;
 
+console.log('in deploy-casino.ts');
 const deployCasino =  async ({ deployments, getNamedAccounts }: HardhatRuntimeEnvironment) => {
   const { deploy, log } = deployments;
   const { deployer } = await getNamedAccounts();
   const chainId = network.config.chainId as number;
+  console.log('🚀  file: 01-deploy-casino.ts:11  chainId', chainId)
 
   const TOKEN_NAME = 'Awesome Token Yeah';
   const TOKEN_SYMBOL = 'ATY';

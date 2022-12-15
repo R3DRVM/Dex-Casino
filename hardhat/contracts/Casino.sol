@@ -50,11 +50,14 @@ contract Casino is Ownable {
         paymentToken.mint(msg.sender, msg.value * purchaseRatio);
     }
 
-    /// @notice Charge the amount and add bet amount multiplied by mulriplier to bets mapping
+    /// @notice Charge the amount and add bet amount multiplied by multiplier to bets mapping
     function bet(uint256 amount, uint256 multiplier) public payable {
-        require(amount >= paymentToken.balanceOf(msg.sender));
-        bets[msg.sender] = (amount - betFee) * multiplier;
-        ownerPool += (amount * betFee);
+        require(
+            amount <= paymentToken.balanceOf(msg.sender),
+            "Amount higher than balance"
+        ); // This might be redundant. Seems to revert without it.
+        bets[msg.sender] = (amount * multiplier) * (1e18 - betFee);
+        ownerPool += amount * multiplier * betFee;
         paymentToken.transferFrom(msg.sender, address(this), amount);
     }
 
