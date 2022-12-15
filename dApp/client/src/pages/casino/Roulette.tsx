@@ -15,6 +15,7 @@ import { getRandomRoulettePocket } from '../../utils/getRandom';
 import { casinoAddresses } from '../../constants/casino';
 import { casinoAbi } from '../../constants/casino';
 import { ethers } from 'ethers';
+import { Logo } from '../../assets/Logo';
 
 interface DisplayStats {
   winningNumber: string;
@@ -40,9 +41,10 @@ export const Roulette = () => {
   const [win, setWinner] = useState(false);
   const [betAmount, setBetAmount] = useState(0);
   const [potentialWin, setPotentialWin] = useState(0);
+  const [winnings, setWinnings] = useState(0);
   console.log('🚀  file: Roulette.tsx:43  potentialWin', potentialWin);
 
-  const { address: account } = useAccount();
+  const { address: account, isConnected } = useAccount();
   const { data: signer } = useSigner();
   const { chain } = useNetwork();
   const chainId = chain?.id.toString();
@@ -59,6 +61,15 @@ export const Roulette = () => {
     abi: erc20ABI,
     signerOrProvider: signer,
   });
+
+  useEffect(() => {
+    const initialize = async () => {
+      // if (!casinoContract || !account) return;
+      const _winnings = await casinoContract?.winnings(account);
+      setWinnings(Number(ethers.utils.formatEther(_winnings)));
+    };
+    initialize();
+  }, [isConnected]);
 
   useEffect(() => {
     if (!chainId) return;
@@ -87,7 +98,6 @@ export const Roulette = () => {
       console.log('Loserrrrrrrrrrrrrrrrrr');
       return;
     }
-    
   }, [gameStats?.winningNumber]);
 
   const textColor = () => {
@@ -146,125 +156,143 @@ export const Roulette = () => {
     } catch (error) {
       console.log(error);
     }
-    
   };
 
   return (
     <>
-      {win ? (
-        <div className='alert alert-success shadow-lg m-5'>
-          <div>
-            <svg
-              xmlns='http://www.w3.org/2000/svg'
-              className='stroke-current flex-shrink-0 h-6 w-6'
-              fill='none'
-              viewBox='0 0 24 24'>
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth='2'
-                d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
-              />
-            </svg>
-            <span>We have a winner!</span>
+      <div className='card bg-base-100 shadow-xl mb-20'>
+        <div className='card-body'>
+          <div className='w-full flex items-center justify-between gap-6'>
+            <h2 className='card-title whitespace-nowrap'>Unredeemed winnings: </h2>
+            <div className='flex items-center gap-2'>
+              <h2 className='card-title whitespace-nowrap'>{winnings} </h2>
+              <div className='w-full h-6'>
+                <Logo />
+              </div>
+            </div>
+            <div className='card-actions justify-end'>
+              <button className='btn btn-primary'>Redeem</button>
+            </div>
           </div>
         </div>
-      ) : (
-        <></>
-      )}
-
-      <div className='card flex flex-row'>
-        <div className={'stats stats-vertical shadow rounded-2xl border-4 border-primary'}>
-          <div className='stat'>
-            <div className={'stat-title text-primary'}>Winning Number</div>
-            <div className='stat-value text-primary pb-2'>
-              {gameStats ? gameStats.winningNumber : '__'}
-            </div>
-            <div className='stat-desc'>
-              {gameStats ? `Parity: ${gameStats.winningParity.toUpperCase()}` : 'Spin to Play'}
-            </div>
-            <div className='stat-desc'>
-              {gameStats ? `Color: ${gameStats.winningColor.toUpperCase()}` : ''}
+      </div>
+      <div className='flex flex-col gap-4 items-center justify-center'>
+        {win ? (
+          <div className='alert alert-success shadow-lg m-5'>
+            <div>
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                className='stroke-current flex-shrink-0 h-6 w-6'
+                fill='none'
+                viewBox='0 0 24 24'>
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
+                />
+              </svg>
+              <span>We have a winner!</span>
             </div>
           </div>
-          <div className='stat'>
-            <input
-              type='text'
-              placeholder={autoChoose ? chosenPocket : 'Enter winning number'}
-              className={'input input-bordered input-primary w-full max-w-xs ' + textColor()}
-              disabled={autoChoose}
-              onChange={({ target: { value } }) => {
-                if (0 <= parseInt(value) && parseInt(value) <= 36) {
-                  choosePocket(value);
-                } else {
-                  choosePocket(undefined);
-                }
+        ) : (
+          <></>
+        )}
+
+        <div className='card flex flex-row'>
+          <div className={'stats stats-vertical shadow rounded-2xl border-4 border-primary'}>
+            <div className='stat'>
+              <div className={'stat-title text-primary'}>Winning Number</div>
+              <div className='stat-value text-primary pb-2'>
+                {gameStats ? gameStats.winningNumber : '__'}
+              </div>
+              <div className='stat-desc'>
+                {gameStats ? `Parity: ${gameStats.winningParity.toUpperCase()}` : 'Spin to Play'}
+              </div>
+              <div className='stat-desc'>
+                {gameStats ? `Color: ${gameStats.winningColor.toUpperCase()}` : ''}
+              </div>
+            </div>
+            <div className='stat'>
+              <input
+                type='text'
+                placeholder={autoChoose ? chosenPocket : 'Enter winning number'}
+                className={'input input-bordered input-primary w-full max-w-xs ' + textColor()}
+                disabled={autoChoose}
+                onChange={({ target: { value } }) => {
+                  if (0 <= parseInt(value) && parseInt(value) <= 36) {
+                    choosePocket(value);
+                  } else {
+                    choosePocket(undefined);
+                  }
+                }}
+              />
+              <div className='divider'>OR</div>
+              <div className='form-control'>
+                <label className='label cursor-pointer'>
+                  <span className='label-text text-secondary'>I'm feeling lucky!</span>
+                  <input
+                    type='checkbox'
+                    className='checkbox'
+                    checked={autoChoose}
+                    onChange={() => {
+                      choosePocket(undefined);
+                      handleChangePocket();
+                    }}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className='stat'>
+              <div className='stat-title'>Bet Secured</div>
+              <div className='stat-value'>{betAmount} DEX</div>
+              <p className='text-sm'>Potential win: {potentialWin} </p>
+              <div className='stat-actions'>
+                <button className='btn btn-sm btn-secondary' onClick={handleBetChange}>
+                  Increase bet
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className='game-card flex flex-col ml-5 items-center'>
+            <Wheel
+              mustStartSpinning={mustSpin}
+              perpendicularText={true}
+              data={roulettePockets}
+              prizeNumber={winningIndex}
+              textColors={['white']}
+              outerBorderWidth={10}
+              outerBorderColor={'#3d251e'}
+              innerBorderWidth={40}
+              innerBorderColor={'#3d251e'}
+              innerRadius={45}
+              textDistance={90}
+              radiusLineWidth={0}
+              onStopSpinning={() => {
+                setMustSpin(false);
+                const gameStats = {
+                  winningNumber: roulettePockets[winningIndex].option,
+                  winningColor: roulettePockets[winningIndex].style.backgroundColor,
+                  winningParity: !(parseInt(roulettePockets[winningIndex].option) % 2)
+                    ? 'even'
+                    : 'odd',
+                  reward: 180,
+                };
+                setGameStats(gameStats);
+                if (gameStats.winningNumber === chosenPocket) setWinner(true);
+                setBetAmount(0);
+                setPotentialWin(0);
               }}
             />
-            <div className='divider'>OR</div>
-            <div className='form-control'>
-              <label className='label cursor-pointer'>
-                <span className='label-text text-secondary'>I'm feeling lucky!</span>
-                <input
-                  type='checkbox'
-                  className='checkbox'
-                  checked={autoChoose}
-                  onChange={() => {
-                    choosePocket(undefined);
-                    handleChangePocket();
-                  }}
-                />
-              </label>
-            </div>
-          </div>
 
-          <div className='stat'>
-            <div className='stat-title'>Bet Secured</div>
-            <div className='stat-value'>{betAmount} DEX</div>
-            <div className='stat-actions'>
-              <button className='btn btn-sm btn-secondary' onClick={handleBetChange}>
-                Increase bet
-              </button>
-            </div>
+            <button
+              className='btn btn-wide btn-primary'
+              onClick={handleSpin}
+              disabled={!chosenPocket || betAmount === 0}>
+              SPIN
+            </button>
           </div>
-        </div>
-        <div className='game-card flex flex-col ml-5 items-center'>
-          <Wheel
-            mustStartSpinning={mustSpin}
-            perpendicularText={true}
-            data={roulettePockets}
-            prizeNumber={winningIndex}
-            textColors={['white']}
-            outerBorderWidth={10}
-            outerBorderColor={'#3d251e'}
-            innerBorderWidth={40}
-            innerBorderColor={'#3d251e'}
-            innerRadius={45}
-            textDistance={90}
-            radiusLineWidth={0}
-            onStopSpinning={() => {
-              setMustSpin(false);
-              const gameStats = {
-                winningNumber: roulettePockets[winningIndex].option,
-                winningColor: roulettePockets[winningIndex].style.backgroundColor,
-                winningParity: !(parseInt(roulettePockets[winningIndex].option) % 2)
-                  ? 'even'
-                  : 'odd',
-                reward: 180,
-              };
-              setGameStats(gameStats);
-              if (gameStats.winningNumber === chosenPocket) setWinner(true);
-              setBetAmount(0);
-              setPotentialWin(0);
-            }}
-          />
-
-          <button
-            className='btn btn-wide btn-primary'
-            onClick={handleSpin}
-            disabled={!chosenPocket || betAmount === 0}>
-            SPIN
-          </button>
         </div>
       </div>
     </>
