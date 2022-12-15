@@ -1,15 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Wheel } from 'react-custom-roulette';
-import {
-  erc20ABI,
-  useAccount,
-  useContract,
-  useContractRead,
-  useContractWrite,
-  useNetwork,
-  usePrepareContractWrite,
-  useSigner,
-} from 'wagmi';
+import { erc20ABI, useAccount, useContract, useNetwork, useSigner } from 'wagmi';
 import { roulettePockets } from '../../assets/rouletteBoard';
 import { getRandomRoulettePocket } from '../../utils/getRandom';
 import { casinoAddresses } from '../../constants/casino';
@@ -24,9 +15,6 @@ interface DisplayStats {
   winningParity: string;
 }
 
-// type contractAddressesInterface = {
-//   [key: string]: `0x${string}`[];
-// };
 type contractAddressesInterface = {
   [key: string]: string[];
 };
@@ -35,14 +23,12 @@ export const Roulette = () => {
   const [mustSpin, setMustSpin] = useState(false);
   const [winningIndex, setWinningIndex] = useState(0);
   const [gameStats, setGameStats] = useState<DisplayStats | undefined>();
-  // console.log('🚀  file: Roulette.tsx:17  gameStats', gameStats);
   const [chosenPocket, choosePocket] = useState<string | undefined>();
   const [autoChoose, setAutoChoose] = useState(false);
   const [win, setWinner] = useState(false);
   const [betAmount, setBetAmount] = useState(0);
   const [potentialWin, setPotentialWin] = useState(0);
   const [winnings, setWinnings] = useState(0);
-  console.log('🚀  file: Roulette.tsx:43  potentialWin', potentialWin);
 
   const { address: account, isConnected } = useAccount();
   const { data: signer } = useSigner();
@@ -64,7 +50,6 @@ export const Roulette = () => {
 
   useEffect(() => {
     const initialize = async () => {
-      // if (!casinoContract || !account) return;
       const _winnings = await casinoContract?.winnings(account);
       setWinnings(Number(ethers.utils.formatEther(_winnings)));
     };
@@ -128,9 +113,7 @@ export const Roulette = () => {
     }
     const betFeeBn = await casinoContract?.betFee();
     const betFee = ethers.utils.formatEther(betFeeBn);
-    console.log('🚀  file: Roulette.tsx:115  betFee', betFee);
 
-    console.log('Past checks');
     setWinner(false);
     const multiplier = 36;
     const betAmountBn = ethers.utils.parseEther(betAmount.toString());
@@ -148,7 +131,6 @@ export const Roulette = () => {
       await casinoContract?.bet(betAmount.toString(), multiplier.toString());
       const currentBetsBn = await casinoContract?.bets(account);
       const currentBet = ethers.utils.formatEther(currentBetsBn);
-      console.log('🚀  file: Roulette.tsx:126  currentBets', currentBet);
 
       setWinningIndex(getRandomRoulettePocket());
       setMustSpin(true);
@@ -162,7 +144,7 @@ export const Roulette = () => {
     <>
       <div className='card bg-base-100 shadow-xl mb-20'>
         <div className='card-body'>
-          <div className='w-full flex items-center justify-between gap-6'>
+          <div className='w-full flex items-center justify-around gap-6'>
             <h2 className='card-title whitespace-nowrap'>Unredeemed winnings: </h2>
             <div className='flex items-center gap-2'>
               <h2 className='card-title whitespace-nowrap'>{winnings} </h2>
