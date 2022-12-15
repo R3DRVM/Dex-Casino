@@ -6,7 +6,7 @@ import { MdOutlineInfo, MdOutlineSwapVert } from 'react-icons/md';
 import { erc20ABI, useAccount, useNetwork, useSigner } from 'wagmi';
 import { sendTransaction, prepareSendTransaction } from '@wagmi/core';
 
-import { ethTokendata } from '../../assets/goerli-tokens';
+import { ethTokendata } from '../../constants/tokenLists/goerli-tokens';
 import { TokenListModal } from '../../components/dex/TokenListModal';
 import { TokenInputRow } from '../../components/dex/TokenInputRow';
 import { Modal } from '../../components/ui/modal/Modal';
