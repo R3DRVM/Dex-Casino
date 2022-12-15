@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Wheel } from "react-custom-roulette";
 import { roulettePockets } from "../../assets/rouletteBoard";
-import { getRandomRoulettePocket } from "../../util/getRandom";
+import { getRandomRoulettePocket } from "../../utils/getRandom";
 
 interface DisplayStats {
 	winningNumber: string;

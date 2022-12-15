@@ -111,9 +111,9 @@ export const useDexService = () => {
   const fetchTokenList = async (chainId: number | undefined) => {
     if (typeof chainId !== 'number') return;
     if (chainId === 5) {
-      return await import('../assets/goerli-tokens.json');
+      return await import('../constants/tokenLists/goerli-tokens.json');
     } else if (chainId === 80001) {
-      return await import('../assets/mumbai-tokens.json');
+      return await import('../constants/tokenLists/mumbai-tokens.json');
     } else {
       const { tokenListUrl } = getChainData();
       const { data } = await axios.get(tokenListUrl);
