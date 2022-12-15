@@ -12,7 +12,7 @@ function App() {
     // 👆 false parameter is required for react project
   }, []);
   return (
-    <div className='app'>
+    <div className='app '>
       <Header />
       <main className='main'>
         <Routes>
