@@ -1,0 +1,5 @@
+export const airdropReceivers = [
+    '0x339188F7d0eB2D80dCaCf40A9432093201A61D99',
+    '0x63c50ef2810EeF47b814ca019f2f7Add53e10A1b',
+    '0x288ef1c6b262529Ea96EfD9EF32EC1F6671093dF'
+] 

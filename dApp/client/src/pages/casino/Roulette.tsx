@@ -1,9 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Wheel } from 'react-custom-roulette';
-import { useContractWrite, useNetwork, usePrepareContractWrite } from 'wagmi';
+import {
+  erc20ABI,
+  useAccount,
+  useContract,
+  useContractRead,
+  useContractWrite,
+  useNetwork,
+  usePrepareContractWrite,
+  useSigner,
+} from 'wagmi';
 import { roulettePockets } from '../../assets/rouletteBoard';
 import { getRandomRoulettePocket } from '../../utils/getRandom';
-import { casinoAbi, casinoAddresses } from '../../constants/casino';
+import { casinoAddresses } from '../../constants/casino';
+import { casinoAbi } from '../../constants/casino';
+import { ethers } from 'ethers';
 
 interface DisplayStats {
   winningNumber: string;
@@ -12,61 +23,61 @@ interface DisplayStats {
   winningParity: string;
 }
 
+// type contractAddressesInterface = {
+//   [key: string]: `0x${string}`[];
+// };
 type contractAddressesInterface = {
   [key: string]: string[];
 };
-
-// export default function LotteryEntrance() {
-//     const addresses: contractAddressesInterface = contractAddresses
 
 export const Roulette = () => {
   const [mustSpin, setMustSpin] = useState(false);
   const [winningIndex, setWinningIndex] = useState(0);
   const [gameStats, setGameStats] = useState<DisplayStats | undefined>();
-  console.log('🚀  file: Roulette.tsx:17  gameStats', gameStats);
+  // console.log('🚀  file: Roulette.tsx:17  gameStats', gameStats);
   const [chosenPocket, choosePocket] = useState<string | undefined>();
   const [autoChoose, setAutoChoose] = useState(false);
   const [win, setWinner] = useState(false);
   const [betAmount, setBetAmount] = useState(0);
+  const [potentialWin, setPotentialWin] = useState(0);
+  console.log('🚀  file: Roulette.tsx:43  potentialWin', potentialWin);
+
+  const { address: account } = useAccount();
+  const { data: signer } = useSigner();
   const { chain } = useNetwork();
-  const chainId: string = chain!.id.toString();
+  const chainId = chain?.id.toString();
   const addresses: contractAddressesInterface = casinoAddresses;
-  const casinoAddress = addresses[chainId][0]
-
-  const textColor = () => {
-    if (!chosenPocket) return '';
-    if (parseInt(chosenPocket) > 36 || parseInt(chosenPocket) < 0) {
-      return 'text-red-500';
-    } else return '';
-  };
-
-  const handleChange = () => {
-    const checkBoxBeforeEvent = autoChoose;
-    setAutoChoose(!autoChoose);
-    checkBoxBeforeEvent
-      ? choosePocket(undefined)
-      : choosePocket(getRandomRoulettePocket().toString());
-  };
-
-  const { config } = usePrepareContractWrite({
+  const [casinoAddress, setCasinoAddress] = useState<string | undefined>();
+  const [tokenAddress, setTokenAddress] = useState<string | undefined>();
+  const casinoContract = useContract({
     address: casinoAddress,
     abi: casinoAbi,
-    functionName: 'bet',
+    signerOrProvider: signer,
   });
-  const { data, isLoading, isSuccess, write } = useContractWrite(config);
+  const tokenContract = useContract({
+    address: tokenAddress,
+    abi: erc20ABI,
+    signerOrProvider: signer,
+  });
 
-  const handleSpin = () => {
-    setWinner(false);
-    const multiplier = 36;
+  useEffect(() => {
+    if (!chainId) return;
+    const _casinoAddress = addresses[chainId][0];
+    setCasinoAddress(_casinoAddress);
+  }, [chainId, addresses]);
 
-    // get approval: tokenContract.approve(casinoContract.address, betAmount)
-    // place bet: casinoContract.bet(amount, multiplier)
-
-    // gameStats.winningNumber === chosenPocket
-
-    setWinningIndex(getRandomRoulettePocket());
-    setMustSpin(true);
-  };
+  useEffect(() => {
+    const getTokenAddress = async () => {
+      if (!casinoContract) return;
+      try {
+        const _tokenAddress = await casinoContract.paymentToken();
+        setTokenAddress(_tokenAddress);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getTokenAddress();
+  }, [casinoContract]);
 
   useEffect(() => {
     if (gameStats?.winningNumber === chosenPocket) {
@@ -76,7 +87,67 @@ export const Roulette = () => {
       console.log('Loserrrrrrrrrrrrrrrrrr');
       return;
     }
+    
   }, [gameStats?.winningNumber]);
+
+  const textColor = () => {
+    if (!chosenPocket) return '';
+    if (parseInt(chosenPocket) > 36 || parseInt(chosenPocket) < 0) {
+      return 'text-red-500';
+    } else return '';
+  };
+
+  const handleChangePocket = () => {
+    const checkBoxBeforeEvent = autoChoose;
+    setAutoChoose(!autoChoose);
+    checkBoxBeforeEvent
+      ? choosePocket(undefined)
+      : choosePocket(getRandomRoulettePocket().toString());
+  };
+
+  const handleBetChange = () => {
+    setBetAmount(betAmount + 1);
+    setPotentialWin((betAmount + 1) * 36); // 0.8 is 1 - betFee. Cold also get this from contract.
+  };
+
+  const handleSpin = async () => {
+    console.log('gonna spin');
+    if (!casinoAddress || !tokenContract || !betAmount || !account) {
+      console.log("Missing data, can't spin");
+      return;
+    }
+    const betFeeBn = await casinoContract?.betFee();
+    const betFee = ethers.utils.formatEther(betFeeBn);
+    console.log('🚀  file: Roulette.tsx:115  betFee', betFee);
+
+    console.log('Past checks');
+    setWinner(false);
+    const multiplier = 36;
+    const betAmountBn = ethers.utils.parseEther(betAmount.toString());
+    const allowanceBn = await tokenContract.allowance(account, `0x${casinoAddress.slice(2)}`);
+    const allowance = ethers.utils.formatEther(allowanceBn).toString();
+    const transferAmount = betAmount / (1 - Number(betFee));
+    console.log('🚀  file: Roulette.tsx:129  transferAmount', transferAmount);
+    const transferAmountBn = ethers.utils.parseEther(transferAmount.toString());
+    let txapproval;
+    try {
+      if (Number(allowance) < transferAmount) {
+        txapproval = await tokenContract.approve(`0x${casinoAddress.slice(2)}`, transferAmountBn);
+        console.log('🚀  file: Roulette.tsx:109  txapproval', txapproval);
+      }
+      await casinoContract?.bet(betAmount.toString(), multiplier.toString());
+      const currentBetsBn = await casinoContract?.bets(account);
+      const currentBet = ethers.utils.formatEther(currentBetsBn);
+      console.log('🚀  file: Roulette.tsx:126  currentBets', currentBet);
+
+      setWinningIndex(getRandomRoulettePocket());
+      setMustSpin(true);
+      await txapproval?.wait();
+    } catch (error) {
+      console.log(error);
+    }
+    
+  };
 
   return (
     <>
@@ -140,7 +211,7 @@ export const Roulette = () => {
                   checked={autoChoose}
                   onChange={() => {
                     choosePocket(undefined);
-                    handleChange();
+                    handleChangePocket();
                   }}
                 />
               </label>
@@ -151,9 +222,7 @@ export const Roulette = () => {
             <div className='stat-title'>Bet Secured</div>
             <div className='stat-value'>{betAmount} DEX</div>
             <div className='stat-actions'>
-              <button
-                className='btn btn-sm btn-secondary'
-                onClick={() => setBetAmount(betAmount + 1)}>
+              <button className='btn btn-sm btn-secondary' onClick={handleBetChange}>
                 Increase bet
               </button>
             </div>
@@ -186,6 +255,7 @@ export const Roulette = () => {
               setGameStats(gameStats);
               if (gameStats.winningNumber === chosenPocket) setWinner(true);
               setBetAmount(0);
+              setPotentialWin(0);
             }}
           />
 
