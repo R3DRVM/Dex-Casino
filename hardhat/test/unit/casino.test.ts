@@ -27,9 +27,9 @@ chainId !== 31337
       beforeEach(async () => {
         deployer = (await getNamedAccounts()).deployer;
         player = (await getNamedAccounts()).player;
-        await deployments.fixture(['casino']); // Deploys modules with the tag and "casino"
+        await deployments.fixture(['casino']); // Deploys modules with the tag "casino"
         casinoContract = await ethers.getContract('Casino'); // Returns a new connection to the casino contract
-        casino = casinoContract.connect(deployer); // Returns a new instance of the casino contract connected to player
+        casino = casinoContract.connect(player); // Returns a new instance of the casino contract connected to player
         tokenAddress = await casino.paymentToken();
         tokenContract = await ethers.getContractAt('ERC20', tokenAddress);
       });
@@ -70,7 +70,6 @@ chainId !== 31337
           //  before drop
           const playerBalanceBn = await tokenContract.balanceOf(player);
           const playerBalance = Number(ethers.utils.formatEther(playerBalanceBn));
-          console.log('🚀  file: casino.test.ts:73  playerBalance', playerBalance);
 
           // after drop
           await casinoContract.doAirdrop([player], amountBn);
@@ -79,6 +78,52 @@ chainId !== 31337
           console.log('🚀  file: casino.test.ts:79  playerBalanceAfter', playerBalanceAfter);
           const diff = playerBalanceAfter - playerBalance;
           assert.equal(diff, amount);
+        });
+      });
+      describe('purchaseTokens', function() {
+        it("let's anyone buy tokens with native coin at correct ratio", async () => {
+          const balanceBeforeBn = await tokenContract.balanceOf(player);
+          const balanceBefore = Number(ethers.utils.formatEther(balanceBeforeBn));
+          const amount = 2;
+          const amountBn = ethers.utils.parseEther(amount.toString());
+          await casinoContract.purchaseTokens({ value: amountBn });
+          const balanceAfterBn = await tokenContract.balanceOf(player);
+          const balanceAfter = Number(ethers.utils.formatEther(balanceAfterBn));
+          assert.equal(balanceAfter - balanceBefore, amount * PURCHASE_RATIO);
+        });
+      });
+      describe('bet', function() {
+        let playerBalance: number;
+        beforeEach(async () => {
+          const balanceBeforeBn = await tokenContract.balanceOf(player);
+          const balanceBefore = Number(ethers.utils.formatEther(balanceBeforeBn));
+          const buyAmount = 2;
+          const amountBn = ethers.utils.parseEther(buyAmount.toString());
+          await casinoContract.purchaseTokens({ value: amountBn });
+          const playerBalanceBn = await tokenContract.balanceOf(player);
+          playerBalance = Number(ethers.utils.formatEther(playerBalanceBn));
+          console.log('🚀  file: casino.test.ts:104  playerBalance', playerBalance);
+        });
+        it('stores a bet as amount * multiplier * (1 - bet fee)', async () => {
+          const betAmount = 3;
+          const betAmountBn = ethers.utils.parseEther(betAmount.toString());
+          const multiplier = 33;
+          const betXmultiplier = betAmount * multiplier;
+          const betXmultiplierBn = ethers.utils.parseEther(betXmultiplier.toString());
+          await tokenContract.approve(casinoContract.address, betXmultiplierBn);
+
+          await casinoContract.bet(betAmount.toString(), multiplier.toString()); // bet is not store in unitBits?
+          const playerBetBn = await casinoContract.bets(player);
+          const playerBet = ethers.utils.formatEther(playerBetBn);
+          assert.equal(Number(playerBet), betAmount * multiplier * (1 - BET_FEE));
+        });
+        it("reverts if amount is higher than sender's token balance", async () => {
+          const highBetamount = playerBalance + 1;
+          const highBetamountBn = ethers.utils.parseEther(highBetamount.toString());
+          await tokenContract.approve(casinoContract.address, highBetamountBn);
+          await expect(casinoContract.bet(highBetamountBn, 2)).to.be.revertedWith(
+            'Amount higher than balance'
+          );
         });
       });
     });
