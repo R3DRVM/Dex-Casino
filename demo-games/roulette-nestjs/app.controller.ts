@@ -11,7 +11,7 @@ export class AppController {
   }
 
   @Post('/play')
-  playRoulette(@Body('bet') bet: number, @Body('number') number: number): string {
+  playRoulette(@Body('number') number: number): string {
     // Generate a random number to determine the outcome of the game
     const outcome = Math.floor(Math.random() * 36);
 
